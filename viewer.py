@@ -115,8 +115,39 @@ growth_chart = (
     .properties(width=800, height=300, title="Yearly Growth Rates")
 )
 
+# Add annotations for 2009 (Police Unrest) and 2021 (Covid Rebound)
+annotations = pd.DataFrame(
+    {
+        "Year": [2009, 2021],
+        "Growth_Rate": yearly_data.loc[
+            yearly_data["Year"].isin([2009, 2021]), "Growth_Rate"
+        ].values,
+        "Label": ["Political Unrest", "Covid Rebound"],
+    }
+)
+
+annotation_chart = (
+    alt.Chart(annotations)
+    .mark_text(
+        align="left",
+        dx=5,  # Adjust horizontal position
+        dy=-10,  # Adjust vertical position
+        fontSize=12,
+        fontWeight="bold",
+        color="red",
+    )
+    .encode(
+        x="Year:Q",
+        y="Growth_Rate:Q",
+        text="Label",
+    )
+)
+
+# Combine growth chart and annotations
+annotated_growth_chart = growth_chart + annotation_chart
+
 # Display the chart
 st.altair_chart(chart, use_container_width=True)
 
-# Display the growth rate chart
-st.altair_chart(growth_chart, use_container_width=True)
+# Display the growth rate chart with annotations
+st.altair_chart(annotated_growth_chart, use_container_width=True)
