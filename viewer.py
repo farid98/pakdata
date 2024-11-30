@@ -3,6 +3,32 @@ import pandas as pd
 import altair as alt
 from datetime import datetime, timedelta
 
+
+# Add this at the beginning of your script
+st.markdown(
+    """
+    <style>
+        /* Remove side margins and padding for all devices */
+        .block-container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-top: 2rem;
+            padding-bottom: 1rem;
+        }
+        
+        /* Adjust width for mobile screens */
+        @media (max-width: 768px) {
+            .block-container {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 # Load the CSV data
 csv_file = "pakistan_exports.csv"
 data = pd.read_csv(csv_file)
@@ -17,22 +43,32 @@ data["Exports"] = data["Exports"].astype(float)
 # Add Year column for yearly aggregation
 data["Year"] = data["Date"].dt.year
 
+
 # Streamlit App
-st.title("Pakistan Exports")
-st.markdown("Source: State Bank Data")
-st.divider()
+# st.title("Pakistan Exports")
+# with st.popover("Settings"):
+with st.expander("Settings", expanded=True):
 
-# Time range options using segmented control
-time_range_option = st.segmented_control(
-    "Time Range",
-    ["All Data", "Last 5 Years", "Last 10 Years"],
-    selection_mode="single",
-    default="All Data",
-)
+    # Time range options using segmented control
+    time_range_option = st.segmented_control(
+        "Time Range",
+        ["All Data", "Last 5 Years", "Last 10 Years"],
+        selection_mode="single",
+        default="All Data",
+    )
 
-# Handle deselection (if any) by ensuring a valid option
-if not time_range_option:
-    time_range_option = "All Data"
+    # Handle deselection (if any) by ensuring a valid option
+    if not time_range_option:
+        time_range_option = "All Data"
+
+    # Moving average options using segmented control
+    moving_avg_option = st.segmented_control(
+        "Moving Average Window",
+        ["None", "3 Months", "6 Months", "12 Months"],
+        selection_mode="single",
+        default="12 Months",
+    )
+
 
 # Filter data based on the selected time range
 if time_range_option == "All Data":
@@ -52,13 +88,6 @@ complete_years_data = data[data["Year"] < 2024]
 yearly_data = complete_years_data.groupby("Year")["Exports"].sum().reset_index()
 yearly_data["Growth_Rate"] = yearly_data["Exports"].pct_change() * 100
 
-# Moving average options using segmented control
-moving_avg_option = st.segmented_control(
-    "Moving Average Window",
-    ["None", "3 Months", "6 Months", "12 Months"],
-    selection_mode="single",
-    default="12 Months",
-)
 
 # Handle deselection (if any) by ensuring a valid option
 if not moving_avg_option:
@@ -74,14 +103,13 @@ if moving_avg_option != "None":
         .mean()
     )
 
-st.divider()
 
 # Create the Altair chart with or without moving average
 line = (
     alt.Chart(time_filtered_data)
-    .mark_line(point=True)
+    .mark_line(color="green")
     .encode(
-        x="Date:T",
+        x=alt.X("Date:T", axis=alt.Axis(title=None)),  # Remove x-axis title
         y=alt.Y(
             "Exports_Billions:Q",
             axis=alt.Axis(title="Exports (in Billions USD)", format=".2f"),
@@ -94,54 +122,103 @@ line = (
 if moving_avg_option != "None":
     moving_avg = (
         alt.Chart(time_filtered_data)
-        .mark_line(color="red")
+        .mark_line(color="orange")
         .encode(x="Date:T", y=alt.Y("Moving_Avg:Q", title=""))
     )
     chart = line + moving_avg
 else:
     chart = line
 
-# Create the growth rate chart
+# Filter yearly data based on the time range selector
+filtered_yearly_data = yearly_data[
+    yearly_data["Year"] >= time_filtered_data["Year"].min()
+]
+
 growth_chart = (
-    alt.Chart(yearly_data)
-    .mark_bar(color="green")
+    alt.Chart(filtered_yearly_data)
+    .mark_bar()  # Adjust bar width with `size`
     .encode(
         x=alt.X(
-            "Year:Q", title="Year", axis=alt.Axis(format="d")
-        ),  # Remove commas from Year
+            "Year:O",  # Use `O` for ordinal scale, ensures bars are closer
+            axis=alt.Axis(title=None, labelAngle=0),
+        ),
         y=alt.Y("Growth_Rate:Q", title="Yearly Growth Rate (%)"),
-        tooltip=["Year:Q", alt.Tooltip("Growth_Rate:Q", format=".2f")],
+        color=alt.condition(
+            "datum.Growth_Rate >= 0",  # Conditional logic
+            alt.value("green"),  # Positive growth is green
+            alt.value("red"),  # Negative growth is red
+        ),
+        tooltip=["Year:O", alt.Tooltip("Growth_Rate:Q", format=".2f")],
     )
-    .properties(width=800, height=300, title="Yearly Growth Rates")
+    .properties(title="Yearly Growth Rates", width=800, height=300)
 )
 
-# Add annotations for 2009 (Police Unrest) and 2021 (Covid Rebound)
-annotations = pd.DataFrame(
-    {
-        "Year": [2009, 2021],
-        "Growth_Rate": yearly_data.loc[
-            yearly_data["Year"].isin([2009, 2021]), "Growth_Rate"
-        ].values,
-        "Label": ["Political Unrest", "Covid Rebound"],
-    }
+annotations = filtered_yearly_data[
+    filtered_yearly_data["Year"].isin([2009, 2020, 2021])
+].copy()
+annotations["Label"] = annotations["Year"].map(
+    {2009: "Political Unrest", 2020: "Covid", 2021: "Covid Rebound"}
 )
 
-annotation_chart = (
-    alt.Chart(annotations)
+# Drop rows with missing Growth_Rate values (e.g., years not in the filtered dataset)
+annotations = annotations.dropna(subset=["Growth_Rate"])
+
+annotation_2009 = (
+    alt.Chart(annotations[annotations["Year"] == 2009])
     .mark_text(
         align="left",
-        dx=5,  # Adjust horizontal position
-        dy=-10,  # Adjust vertical position
+        dx=-5,  # Horizontal offset for 2009
+        dy=10,  # Vertical offset for 2009
         fontSize=12,
-        fontWeight="bold",
-        color="red",
+        # fontWeight="bold",
+        color="blue",
     )
     .encode(
-        x="Year:Q",
+        x="Year:O",
         y="Growth_Rate:Q",
         text="Label",
     )
 )
+
+annotation_2021 = (
+    alt.Chart(annotations[annotations["Year"] == 2021])
+    .mark_text(
+        align="left",
+        dx=-5,  # Horizontal offset for 2021
+        dy=-15,  # Vertical offset for 2021
+        fontSize=12,
+        # fontWeight="bold",
+        color="blue",
+    )
+    .encode(
+        x="Year:O",
+        y="Growth_Rate:Q",
+        text="Label",
+    )
+)
+
+
+annotation_2020 = (
+    alt.Chart(annotations[annotations["Year"] == 2020])
+    .mark_text(
+        align="left",
+        dx=-5,  # Horizontal offset for 2021
+        dy=10,  # Vertical offset for 2021
+        fontSize=12,
+        # fontWeight="bold",
+        color="blue",
+    )
+    .encode(
+        x="Year:O",
+        y="Growth_Rate:Q",
+        text="Label",
+    )
+)
+
+
+# Combine both annotation charts
+annotation_chart = annotation_2009 + annotation_2020 + annotation_2021
+
 
 # Combine growth chart and annotations
 annotated_growth_chart = growth_chart + annotation_chart
