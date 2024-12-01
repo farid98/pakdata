@@ -3,18 +3,27 @@ import pandas as pd
 import plotly.express as px
 import os
 
+# Add CSS for better layout adjustment
+st.markdown(
+    """
+    <style>
+        .block-container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+            padding-top: 5rem;
+            padding-bottom: 1rem;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
 # Load the data from the same folder as the script
 csv_file = os.path.join(
     os.path.dirname(__file__), "../data/pk_exports_by_type_FY24_usd.csv"
 )
 data = pd.read_csv(csv_file)
-
-st.markdown(
-    """
-     *Tip: Click on any **box** to explore deeper. Click it again to return.*
-    """,
-    unsafe_allow_html=True,
-)
 
 xxxx = []
 
@@ -94,32 +103,23 @@ pie_fig = px.pie(
 sorted_data = data.sort_values(by="value", ascending=False)
 
 
-# Generate the legend with matching colors in two columns
+st.markdown(
+    """
+     *Tip: Click on any box to explore deeper. 
+     Click it again to return*
+    """,
+    unsafe_allow_html=True,
+)
+
+# Generate the legend as a single column
 st.markdown("### Export Categories (Legend)")
 
-# Create two columns for the legend
-col1, col2 = st.columns(2)
+# Combine content for a single-column layout
+legend_list = [
+    f'<span style="color:{color_map[row["Title"]]};">⬤</span> '
+    f'**{row["Title"]}**: {row["value2"]:.2f}B USD ({row["pct"]:.2f}%)'
+    for _, row in sorted_data.iterrows()
+]
 
-# Populate the columns with aligned content
-with col1:
-    st.markdown(
-        "<br>".join(
-            [
-                f'<span style="color:{color_map[row["Title"]]};">⬤</span> '
-                f'**{row["Title"]}**'
-                for _, row in sorted_data.iterrows()
-            ]
-        ),
-        unsafe_allow_html=True,
-    )
-
-with col2:
-    st.markdown(
-        "<br>".join(
-            [
-                f'{row["value2"]:.2f}B USD ({row["pct"]:.2f}%)'
-                for _, row in sorted_data.iterrows()
-            ]
-        ),
-        unsafe_allow_html=True,
-    )
+# Render the legend
+st.markdown("<br>".join(legend_list), unsafe_allow_html=True)
