@@ -112,7 +112,7 @@ st.markdown(
 )
 
 # Generate the legend as a single column
-st.markdown("### Export Categories (Legend)")
+st.markdown("### Export Categories")
 
 # Combine content for a single-column layout
 legend_list = [
