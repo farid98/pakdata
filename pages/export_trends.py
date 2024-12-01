@@ -94,7 +94,7 @@ fig_bar.update_layout(
     xaxis_title=None,
     yaxis_title="Growth Rate (%)",
     hovermode="x unified",
-    showlegend=False,  # Hide legend
+    coloraxis_showscale=False,  # Disable color scale
 )
 
 # Display Bar Chart
