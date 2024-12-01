@@ -47,7 +47,9 @@ data["Year"] = data["Date"].dt.year
 # Streamlit App
 # st.title("Pakistan Exports")
 # with st.popover("Settings"):
-with st.expander("Settings", expanded=True):
+
+
+with st.expander("Settings", expanded=False):
 
     # Time range options using segmented control
     time_range_option = st.segmented_control(
