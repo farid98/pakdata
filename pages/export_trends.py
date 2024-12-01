@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from datetime import datetime, timedelta
+import os
 
 # Add CSS for better layout adjustment
 st.markdown(
@@ -19,7 +20,11 @@ st.markdown(
 )
 
 # Load the CSV data
-csv_file = "data/pakistan_exports.csv"
+# csv_file = "data/pakistan_exports.csv"
+
+csv_file = os.path.join(os.path.dirname(__file__), "../data/pakistan_exports.csv")
+data = pd.read_csv(csv_file)
+
 data = pd.read_csv(csv_file)
 
 # Strip leading/trailing spaces from column names
