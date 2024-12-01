@@ -19,7 +19,7 @@ st.markdown(
 )
 
 # Load the CSV data
-csv_file = "pakistan_exports.csv"
+csv_file = "data/pakistan_exports.csv"
 data = pd.read_csv(csv_file)
 
 # Strip leading/trailing spaces from column names

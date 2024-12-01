@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 
 # Load the data from the same folder as the script
-data = pd.read_csv("pk_exports_by_type_FY24_usd.csv")
+data = pd.read_csv("data/pk_exports_by_type_FY24_usd.csv")
 
 # Ensure column names are consistent and handle whitespace
 data.columns = data.columns.str.strip()
