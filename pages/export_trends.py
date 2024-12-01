@@ -94,9 +94,7 @@ fig_bar.update_layout(
     xaxis_title=None,
     yaxis_title="Growth Rate (%)",
     hovermode="x unified",
-    legend=dict(
-        orientation="h", yanchor="top", y=1.1, xanchor="center", x=0.5
-    ),  # Legend on top
+    showlegend=False,  # Hide legend
 )
 
 # Display Bar Chart
