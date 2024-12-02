@@ -20,6 +20,11 @@ total_exports = data["Exports"].sum()
 data["Value_Billions"] = data["Exports"] / 1e9
 data["Percentage"] = (data["Exports"] / total_exports) * 100
 
+# Add a column for multi-line labels
+data["Title_with_values"] = data.apply(
+    lambda row: f"{row['country']}<br>({row['Value_Billions']:.2f}B USD)", axis=1
+)
+
 # Define a color palette
 unique_countries = data["country"].unique()
 color_palette = px.colors.qualitative.Set3
@@ -30,33 +35,36 @@ color_map = {
     for i, country in enumerate(unique_countries)
 }
 
-# Visualization with Plotly Bar Chart
-bar_fig = px.bar(
-    data.sort_values(by="Exports", ascending=False),  # Sort by exports
-    x="country",
-    y="Value_Billions",
-    title="Pakistan Exports by Country",
-    labels={"Value_Billions": "Exports (Billions USD)", "country": "Country"},
-    color="country",
-    color_discrete_map=color_map,
+# Visualization with Plotly Treemap
+treemap_fig = px.treemap(
+    data,
+    path=["Title_with_values"],  # Use multi-line labels
+    values="Exports",  # Size of the rectangles
+    labels={"Exports": "Exports (USD)", "Title_with_values": "Country"},
+    color="country",  # Color by country
+    color_discrete_map=color_map,  # Ensure consistent colors
     hover_data={"Value_Billions": ":.2f", "Percentage": ":.2f"},
 )
 
-# Update hovertemplate for Bar Chart
-bar_fig.update_traces(
-    hovertemplate="<b>%{x}</b><br>Exports: %{y:.2f}B USD<br>Percentage: %{customdata[1]:.2f}%",
+# Update hovertemplate for Treemap
+treemap_fig.update_traces(
+    hovertemplate="<b>%{label}</b><br>Exports: %{value:,.0f} USD<br>Percentage: %{customdata[1]:.2f}%",
     customdata=data[["Value_Billions", "Percentage"]].values,
 )
 
-bar_fig.update_layout(
-    xaxis_title=None,
-    yaxis_title="Exports (Billions USD)",
+treemap_fig.update_layout(
     hovermode="x unified",
-    showlegend=False,  # Hide legend
+    title="Pakistan Exports by Country",
 )
 
-# Display Bar Chart
-st.plotly_chart(bar_fig, use_container_width=True)
+# Display Treemap
+st.plotly_chart(treemap_fig, use_container_width=True)
+
+# Add a message between the chart and the legend
+st.markdown(
+    "*(~150 more countries with small amounts totaling about 2 Billion USD)*",
+    unsafe_allow_html=True,
+)
 
 # List Section (Similar to Legend)
 st.markdown("### Export Breakdown by Country")
