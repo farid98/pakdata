@@ -80,22 +80,33 @@ fig_bar = px.bar(
     y="Growth_Rate",
     title="Yearly Growth Rates",
     labels={"Growth_Rate": "Yearly Growth Rate (%)", "Year": "Year"},
-    color="Growth_Rate",
-    color_continuous_scale=["red", "green"],
     hover_data={"Year": True, "Growth_Rate": ":.2f"},
 )
 
+# Customize bar colors: green for positive, red for negative
 fig_bar.update_traces(
-    marker_line_width=1.5,
-    marker_line_color="black",
+    marker=dict(
+        color=[
+            "green" if value >= 0 else "red" for value in yearly_data["Growth_Rate"]
+        ],
+        line=dict(width=1.5, color="black"),  # Add black border to bars
+    )
 )
 
+# Update layout
 fig_bar.update_layout(
     xaxis_title=None,
     yaxis_title="Growth Rate (%)",
     hovermode="x unified",
-    coloraxis_showscale=False,  # Disable color scale
 )
 
 # Display Bar Chart
 st.plotly_chart(fig_bar, use_container_width=True)
+
+# Styled markdown for smaller font
+st.markdown(
+    "<p style='font-size: 12px; color: gray;'>"
+    "* Nov & Dec 2024 are estimated based on trend as SBP data is not available yet"
+    "</p>",
+    unsafe_allow_html=True,
+)
